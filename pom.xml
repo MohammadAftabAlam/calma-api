@@ -10,23 +10,15 @@
 		<relativePath/>
 		<!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.blogapp</groupId>
-	<artifactId>blogapplicationapis</artifactId>
+	<groupId>com.calmaapp</groupId>
+	<artifactId>calmaappapis</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>blogapplication-1</name>
+	<name>calmaapp</name>
 	<description>This is backend api</description>
 	<properties>
 		<java.version>18</java.version>
 	</properties>
 	<dependencies>
-
-
-
-
-
-
-
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
