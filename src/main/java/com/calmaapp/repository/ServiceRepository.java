@@ -9,4 +9,5 @@ import com.calmaapp.entity.ServicesProvided;
 @Repository
 public interface ServiceRepository extends JpaRepository<ServicesProvided, Long> {
 // Define any custom queries or methods if required
+
 }

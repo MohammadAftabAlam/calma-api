@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.Principal;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 import com.calmaapp.entity.Review;
 import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.User;
+ 
 import com.calmaapp.payloads.ReviewDTO;
 import com.calmaapp.payloads.UserDTO;
 import com.calmaapp.repository.SalonRepository;
@@ -121,7 +124,17 @@ public class UserService {
         return reviewDTO;
     }
 
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 
+    public void save(User user) {
+        userRepository.save(user);
+    }
+
+    public User findByResetToken(String resetToken) {
+        return userRepository.findByResetToken(resetToken);
+    }
 }
     
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -34,6 +35,9 @@ public class Salon {
     private String address;
     private String contactInfo;
 
+    private double latitude; 
+    private double longitude;
+
     private String openingTime;
     private String closingTime;
     
@@ -45,10 +49,13 @@ public class Salon {
     @Column
     private Double distanceFromCustomer;
 
+    @ElementCollection
+    private List<String> imagePaths; 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
 
-    @OneToMany(mappedBy = "salon", cascade = CascadeType.ALL)
-    private List<ServicesProvided> servicesProvideds = new ArrayList<>();
+    @OneToMany(mappedBy = "salon", fetch = FetchType.EAGER) // Fetch services eagerly
+    private List<ServicesProvided> services;
 }

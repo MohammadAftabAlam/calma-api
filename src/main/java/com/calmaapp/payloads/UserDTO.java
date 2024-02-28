@@ -15,6 +15,7 @@ public class UserDTO {
     private UserType userType; 
     private String name;
     private String password;
+	private String email;
     private int age;
     private String location;
     private String gender;
@@ -22,13 +23,14 @@ public class UserDTO {
 	
 	
 	
-	public UserDTO(String phoneNumber, UserType userType, String name, String password, int age, String location,
+	public UserDTO(String phoneNumber, UserType userType, String name, String password, String email,int age, String location,
 			String gender, String jwtToken) {
 		super();
 		this.phoneNumber = phoneNumber;
 		this.userType = userType;
 		this.name = name;
 		this.password = password;
+		this.email=email;
 		this.age = age;
 		this.location = location;
 		this.gender = gender;
@@ -38,7 +40,7 @@ public class UserDTO {
 	
 	public UserDTO(User user) {
 		this.phoneNumber = user.getPhoneNumber();
-		//this.userType = user.getUserType();
+		this.userType = user.getUserType();
 		this.name = user.getName();
 		this.password=user.getPassword();
 		this.age = user.getAge();
