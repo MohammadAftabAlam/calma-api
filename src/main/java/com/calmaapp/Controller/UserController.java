@@ -3,6 +3,7 @@ package com.calmaapp.Controller;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -24,14 +25,18 @@ import com.calmaapp.entity.Review;
 import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.User;
 import com.calmaapp.payloads.*;
-import com.calmaapp.payloads.UserDTO;
 import com.calmaapp.repository.SalonRepository;
 import com.calmaapp.repository.UserRepository;
+import com.calmaapp.service.OTPVerificationService;
 import com.calmaapp.service.SalonService;
 import com.calmaapp.service.UserService;
 import com.calmaapp.userService.UserLoginService;
 import com.calmaapp.userService.UserLogoutService;
 import com.calmaapp.userService.UserRegistrationService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+
 import org.springframework.security.core.Authentication;
 
 
@@ -54,6 +59,7 @@ public class UserController {
     @Autowired
     private SalonService salonService;
 
+
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
 
@@ -63,78 +69,49 @@ public class UserController {
     @Autowired
     private SalonRepository salonRepository;
     
+    @Autowired
+    private OTPVerificationService otpVerificationService;
+
     private Logger log;
-
-   
-
- @PostMapping("/register")
- public ResponseEntity<String> processRegistration(@RequestBody UserDTO userDTO) {
-     try {
-         // Validate password before registering the user
-         String passwordValidationResult = validatePassword(userDTO.getPassword());
-
-         // If password is valid, proceed with registration
-         if ("Password is valid".equals(passwordValidationResult)) {
-             // Register user and log in immediately
-             String jwtToken = userRegistrationService.registerUser(userDTO);
-
-             // Return the JWT token along with the success response
-             return ResponseEntity.ok().body(jwtToken);
-         } else {
-             // Return a 400 Bad Request response with the validation error message
-             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(passwordValidationResult);
-         }
-     } catch (Exception e) {
-         // Handle registration failure
-         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                 .body("Failed to register user. Please try again.");
-     }
- }
+  
+    @PostMapping("/register")
+    public ResponseEntity<String> registerUser(@RequestBody UserDTO userDTO) {
+        return userRegistrationService.registerUser(userDTO);
+    }
 
 
+    
     private String validatePassword(String password) {
-            try {
-                // Password validation logic
-                if (password.length() < 8 || password.length() > 20) {
-                    throw new IllegalArgumentException("Password must be between 8 and 20 characters.");
-                }
-
-                if (!password.matches(".*[A-Z].*")) {
-                    throw new IllegalArgumentException("Password must contain at least one uppercase letter.");
-                }
-
-                if (!password.matches(".*[a-z].*")) {
-                    throw new IllegalArgumentException("Password must contain at least one lowercase letter.");
-                }
-
-                if (!password.matches(".*\\d.*")) {
-                    throw new IllegalArgumentException("Password must contain at least one digit.");
-                }
-
-                if (!password.matches(".*[!@#$%^&*()-_=+{}\\[\\]:;\"'<>,.?/\\\\]+.*")) {
-                    throw new IllegalArgumentException("Password must contain at least one special character.");
-                }
-
-                // If validation succeeds, return a success message
-                return "Password is valid";
-            } catch (IllegalArgumentException e) {
-                // If validation fails, return the exception message
-                return e.getMessage();
-            }
+        String passwordPattern = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()-_=+{}\\[\\]:;\"'<>,.?/\\\\])[A-Za-z\\d!@#$%^&*()-_=+{}\\[\\]:;\"'<>,.?/\\\\]{8,20}$";
+        if (!password.matches(passwordPattern)) {
+            throw new IllegalArgumentException("Password must be between 8 and 20 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
         }
+        return "Password is valid";
+    }
+    
 
 
 
 	@PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
+public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
+    try {
+        // Attempt to login the user based on the provided phone number
         ResponseEntity<String> response = userLoginService.loginUser(userDTO);
+        
         if (response.getStatusCode().is2xxSuccessful()) {
             // If login successful, return the JWT token in the response
-            User user = userRepository.findByPhoneNumber(userDTO.getPhoneNumber());
             return ResponseEntity.ok(response.getBody());
+        } else {
+            // If login failed, return the response as it is
+            return response;
         }
-        return response;
+    } catch (Exception e) {
+        // Handle any exceptions that occur during login process
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred during login process: " + e.getMessage());
     }
+}
+
      
     @GetMapping("/user/{userId}")
     public ResponseEntity<UserDTO> getUserDetails(@PathVariable Long userId) {
@@ -281,30 +258,68 @@ public class UserController {
         return reviewDTO;
     }
 
-    
-    @GetMapping("/salons/{salonId}/distance")
-    public ResponseEntity<Double> getDistanceForSalon(@PathVariable Long salonId, Authentication authentication) {
-        try {
-            if (authentication != null && authentication.getPrincipal() instanceof User) {
-                User user = (User) authentication.getPrincipal();
-                Salon salon = salonService.getSalonById(salonId);
+//     @Transactional
+//     @GetMapping("/salons/{salonId}/distance")
+//     public ResponseEntity<Double> getDistanceForSalon(@PathVariable Long salonId, Authentication authentication) {
+//     try {
+//         // Check if user is authenticated and is an instance of User
+//         if (authentication != null && authentication.getPrincipal() instanceof User) {
+//             User user = (User) authentication.getPrincipal();
+//             Salon salon = salonService.getSalonById(salonId);
 
-                if (salon != null) {
-                    salonService.getDistanceForSalon(salon, user);
-                    return ResponseEntity.ok(salon.getDistanceFromCustomer());
-                } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-                }
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-            }
-        } catch (Exception e) {
-            e.printStackTrace(); // Log the exception details
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+//             // Check if the salon exists
+//             if (salon != null) {
+//                 // Update salon distance based on user's location
+//                 salonService.updateSalonDistance(salon, user);
+
+//                 // Get the updated distance from the salon object
+//                 Double distance = salon.getDistanceFromCustomer();
+                
+//                 // Check if distance is available
+//                 if (distance != null) {
+//                     // Return the distance in the response
+//                     return ResponseEntity.ok(distance);
+//                 } else {
+//                     // If distance is null, return not found
+//                     return ResponseEntity.notFound().build();
+//                 }
+//             } else {
+//                 // If salon is null, return not found
+//                 return ResponseEntity.notFound().build();
+//             }
+//         } else {
+//             // If user authentication fails, return unauthorized
+//             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//         }
+//     } catch (Exception e) {
+//         // Log the exception details
+//         e.printStackTrace();
+//         // If an exception occurs, return internal server error
+//         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//     }
+// }
+
+// @PutMapping("/{salonId}/updateDistance")
+//     public ResponseEntity<String> updateSalonDistance(@PathVariable Long salonId, HttpServletRequest request) {
+//         Salon salon = salonService.getSalonById(salonId);
+//         if (salon == null) {
+//             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Salon not found");
+//         }
+//         ResponseEntity<String> response = salonService.updateSalonDistance(salon, request);
+//         return response;
+//     }
+@PostMapping("/salon/update-distance/{salonId}")
+public ResponseEntity<String> updateSalonDistance(@PathVariable Long salonId,
+                                                   @RequestParam Double userLatitude,
+                                                   @RequestParam Double userLongitude) {
+    try {
+        return salonService.updateSalonDistance(salonId, userLatitude, userLongitude);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred while processing the request.");
     }
-
-
-    
+}
+   
 }
 

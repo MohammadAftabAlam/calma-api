@@ -10,6 +10,10 @@ public class CalmaappApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(CalmaappApplication.class, args);
+
+		
 	}
+
+	
 
 }

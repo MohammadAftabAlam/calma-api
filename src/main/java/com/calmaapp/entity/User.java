@@ -17,12 +17,14 @@ import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@Component
 @Entity
 @Getter
 @Setter
@@ -37,11 +39,15 @@ public class User implements UserDetails {
     private double latitude;
     private double longitude;
 
+    private String resetToken;
+
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
     @Transient
     private String jwtToken;
+
+    private String otp;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_type")
@@ -51,7 +57,7 @@ public class User implements UserDetails {
 
     @Column(name = "password")
     private String password;
-
+    private String email;
     private int age;
     private String location;
     private String gender;

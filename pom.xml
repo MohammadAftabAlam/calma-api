@@ -1,23 +1,24 @@
-
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.3</version>
+		<version>3.2.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.blogapp</groupId>
-	<artifactId>blogapplicationapis</artifactId>
+	<artifactId>calma-apis</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>blogapplication-1</name>
+	<name>calma-1</name>
 	<description>This is backend api</description>
 	<properties>
-		<java.version>17</java.version>
+		<java.version>18</java.version>
 	</properties>
 	<dependencies>
+
 	    <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-security</artifactId>
@@ -48,6 +49,13 @@
     <artifactId>mysql-connector-java</artifactId>
     <version>8.0.23</version>
 </dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-mail</artifactId>
+</dependency>
+
+
 
 
 	<dependency>
@@ -103,17 +111,35 @@
 </dependency>
 
 
+<dependency>
+  <groupId>com.google.maps</groupId>
+  <artifactId>google-maps-services</artifactId>
+  <version>2.2.0</version>
+</dependency>
+
+<dependency>
+    <groupId>com.google.http-client</groupId>
+    <artifactId>google-http-client</artifactId>
+    <version>1.40.0</version> <!-- Or the latest version available -->
+</dependency>
+
+ <dependency>
+    <groupId>com.fasterxml.jackson.datatype</groupId>
+    <artifactId>jackson-datatype-jsr310</artifactId>
+    <version>2.15.3</version>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-websocket</artifactId>
+</dependency>
 
 
+</dependencies>
+	
 
-		<dependency>
-			<groupId>com.course</groupId>
-			<artifactId>course</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-	</dependencies>
 
-	<build>
+    <build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -129,6 +155,15 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		
 	</build>
+
+  <repositories>
+    <repository>
+       <id>central</id>
+       <url>https://repo1.maven.org/maven2</url>
+       <layout>default</layout>
+    </repository>
+  </repositories>
 
 </project>

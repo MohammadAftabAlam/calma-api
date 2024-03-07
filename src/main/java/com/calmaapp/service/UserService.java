@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.security.Principal;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 import com.calmaapp.entity.Review;
 import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.User;
+
 import com.calmaapp.payloads.ReviewDTO;
 import com.calmaapp.payloads.UserDTO;
 import com.calmaapp.repository.SalonRepository;
@@ -33,42 +36,35 @@ public class UserService {
             user.setLongitude(longitude);
             userRepository.save(user);
         });
-    } 
-    
+    }
+
     public boolean updateUserDetails(Long userId, UserDTO updatedUserDTO) {
         Optional<User> optionalUser = userRepository.findById(userId);
         if (optionalUser.isPresent()) {
             User existingUser = optionalUser.get();
-            
-           
+
             existingUser.setName(updatedUserDTO.getName());
             existingUser.setAge(updatedUserDTO.getAge());
             existingUser.setLocation(updatedUserDTO.getLocation());
             existingUser.setGender(updatedUserDTO.getGender());
             // Update other fields as needed
-            
+
             userRepository.save(existingUser);
             return true;
         }
         return false;
     }
-    
-   
-    
-   
 
-    
+    public User getUserById(Long userId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        return userOptional.orElse(null);
+    }
 
-	public User getUserById(Long userId) {
-		  Optional<User> userOptional = userRepository.findById(userId);
-	        return userOptional.orElse(null);
-	    }
+    public User getUserByPhoneNumber(String name) {
+        return userRepository.findByPhoneNumber(name);
+    }
 
-	
-	public User getUserByPhoneNumber(String name) {
-		return userRepository.findByPhoneNumber( name);
-	}
-	@Autowired
+    @Autowired
     private SalonRepository salonRepository;
 
     @Autowired
@@ -121,8 +117,15 @@ public class UserService {
         return reviewDTO;
     }
 
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 
+    public void save(User user) {
+        userRepository.save(user);
+    }
+
+    public User findByResetToken(String resetToken) {
+        return userRepository.findByResetToken(resetToken);
+    }
 }
-    
-
-

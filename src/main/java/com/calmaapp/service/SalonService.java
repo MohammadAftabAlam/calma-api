@@ -1,19 +1,15 @@
 package com.calmaapp.service;
 
-
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-
-
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.calmaapp.UserType;
-import com.calmaapp.distanceService.NominatimResponse;
 import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.ServicesProvided;
 import com.calmaapp.entity.User;
@@ -31,96 +25,77 @@ import com.calmaapp.exception.UnauthorizedAccessException;
 import com.calmaapp.payloads.SalonDTO;
 import com.calmaapp.payloads.ServiceDTO;
 import com.calmaapp.repository.SalonRepository;
+import com.calmaapp.repository.ServiceRepository;
+import com.calmaapp.repository.UserRepository;
+import com.calmaapp.service.GeocodingService.Coordinates;
 import com.clmaapp.exception.SalonNotFoundException;
-import com.clmaapp.exception.ServiceNotFoundException;
 
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import com.calmaapp.mappingdistnace.*;
 
 @Service
 public class SalonService {
 
     @Autowired
     private SalonRepository salonRepository;
-    
+    @Autowired
+    private UserRepository userRepository;
+
     @Autowired
     private UserService userService;
-    
+
     RestTemplate restTemplate = new RestTemplate();
 
     private final Logger logger = LoggerFactory.getLogger(SalonService.class);
-    
 
-    public void registerSalon(User salonOwner, SalonDTO salonDTO) {
-        if (salonOwner == null || salonOwner.getUserType() != UserType.SALON_OWNER) {
-            throw new UnauthorizedAccessException("Only salon owners can register salons");
-        }
+    @Autowired
+    private GeocodingService geocodingService;
+    @Autowired
+    private User user;
 
-        // Check if the salon name already exists
-        if (existsByName(salonDTO.getName())) {
-            throw new RuntimeException("Salon with this name already exists");
-        }
+    @Autowired
+    private DirectionsService directionsService;
+ @Autowired
+    private ImageUploadService uploadImage;
 
-        Salon salon = new Salon();
-        salon.setName(salonDTO.getName());
-        salon.setAddress(salonDTO.getAddress());
-        salon.setContactInfo(salonDTO.getContactInfo());
+    @Autowired
+    private ServiceRepository serviceRepo;
 
-        // Associate the salon with the salon owner
-        salon.setOwner(salonOwner);
+    @Autowired
+private ImageUploadService imageUploadService;
 
-        salonRepository.save(salon);
-    }
-    
-//    @Transactional
-    public ResponseEntity<String> addServicesToSalon(Long salonId, List<ServiceDTO> serviceDTOs) {
-        Salon salon = salonRepository.findById(salonId).orElse(null);
-
-        if (salon != null) {
-            List<String> existingServices = new ArrayList<>(); // Track existing services
-
-            for (ServiceDTO serviceDTO : serviceDTOs) {
-                boolean serviceExists = salon.getServicesProvideds().stream()
-                        .anyMatch(service -> service.getServiceName().equalsIgnoreCase(serviceDTO.getServiceName()));
-
-                if (serviceExists) {
-                    existingServices.add(serviceDTO.getServiceName()); // Track existing service names
-                } else {
-                    ServicesProvided service = new ServicesProvided();
-                    service.setServiceName(serviceDTO.getServiceName().toUpperCase());
-                    service.setCost(serviceDTO.getCost());
-                    // Set other service properties if needed
-                    service.setSalon(salon);
-
-                    salon.getServicesProvideds().add(service); // Add service to salon
-                }
-            }
-
-            if (!existingServices.isEmpty()) {
-                // Duplicate services found
-                logger.warn("Duplicate services found: {}", existingServices);
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body("Services already exist: " + existingServices);
-            } else {
-                // Save non-duplicate services to the salon
-                salonRepository.save(salon);
-                logger.info("Services added successfully to salon with ID: {}", salonId);
-                return ResponseEntity.ok("Services added successfully to salon");
-            }
-        } else {
-            // Salon with given salonId not found
-            logger.warn("Salon not found with ID: {}", salonId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Salon not found");
-        }
+public void registerSalon(User salonOwner, SalonDTO salonDTO) {
+    // Check if the salon owner is valid and has the correct user type
+    if (salonOwner == null || salonOwner.getUserType() != UserType.SALON_OWNER) {
+        throw new UnauthorizedAccessException("Only salon owners can register salons");
     }
 
+    // Check if the salon name already exists
+    if (existsByName(salonDTO.getName())) {
+        throw new RuntimeException("Salon with this name already exists");
+    }
 
+    // Convert the salon address to coordinates (latitude and longitude) using the geocoding service
+    Coordinates coordinates = geocodingService.getCoordinatesFromAddress(salonDTO.getAddress());
 
+    // Create a new `Salon` object
+    Salon salon = new Salon();
 
-  
+    // Set the salon properties
+    salon.setName(salonDTO.getName());
+    salon.setAddress(salonDTO.getAddress());
+    salon.setContactInfo(salonDTO.getContactInfo());
+    salon.setOpeningTime(salonDTO.getOpeningTime());
+    salon.setClosingTime(salonDTO.getClosingTime());
+    salon.setLatitude(coordinates.getLatitude()); // Set the latitude
+    salon.setLongitude(coordinates.getLongitude()); // Set the longitude
+    salon.setRating(0.0); // Set the default rating to 0.0
+    salon.setOwner(salonOwner);
+
+    // Save the salon to the database
+    salonRepository.save(salon);
+}
 
     
     @Transactional
@@ -130,7 +105,6 @@ public class SalonService {
 
         salonRepository.deleteServicesProvidedBySalonIdAndServiceName(salon.getId(), serviceName);
     }
-    
 
     public ResponseEntity<String> updateSalon(Long salonId, SalonDTO updatedSalonDTO) {
         try {
@@ -157,95 +131,161 @@ public class SalonService {
         }
     }
 
+    public boolean existsByName(String name) {
+        return salonRepository.existsByName(name);
+    }
 
+    public Salon getSalonById(Long salonId) {
 
-	public boolean existsByName(String name) {
-		return salonRepository.existsByName(name);
-	}
-
-	public Salon getSalonById(Long salonId) {
-        
         return salonRepository.findById(salonId).orElse(null);
     }
 
+    public String saveImage(MultipartFile image) throws IOException {
+        String uploadDir = "C:\\Users\\MohdAzam\\Pictures\\imageforapi"; // Local directory path
 
-	
+        // Logic to save the image to the local directory
+        String filename = image.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir, filename);
+        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
+        // Return the relative path of the saved image
+        return filePath.toString();
+    }
 
-	// Assuming you have a logger instance in your class
-	//private static final Logger logger = LoggerFactory.getLogger(YourClassName.class);
+    public void deleteSalon(Long salonId, String salonOwnerUsername) {
+        // Retrieve the salon from the database
+        Salon salon = salonRepository.findById(salonId)
+                .orElseThrow(() -> new RuntimeException("Salon not found with ID: " + salonId));
 
-	// Your existing method
-	public void getDistanceForSalon(Salon salon, User user) {
-	    try {
-	        String salonAddress = salon.getAddress();
-	        String apiKey = "AIzaSyAZTiI4i3NSYcuZ3DUBeNYnANMYGToosxs";
-	        String url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + URLEncoder.encode(salonAddress, StandardCharsets.UTF_8) + "&key=" + apiKey;
+        // Check if the authenticated user is the owner of the salon
+        if (!salon.getOwner().getUsername().equals(salonOwnerUsername)) {
+            throw new RuntimeException("Unauthorized: Only the salon owner can delete the salon");
+        }
 
-	        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
-	        Map<String, Object> response = responseEntity.getBody();
+        // Delete the salon from the repository
+        salonRepository.delete(salon);
+    }
 
-	        if (response != null && response.containsKey("results")) {
-	            List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
-	            if (!results.isEmpty()) {
-	                Map<String, Object> location = (Map<String, Object>) results.get(0).get("geometry");
-	                Map<String, Double> coordinates = (Map<String, Double>) location.get("location");
+    @Transactional
+    public ResponseEntity<String> updateSalonDistance(Long salonId, Double userLatitude, Double userLongitude) {
+        try {
+            // Retrieve salon information using the salonId
+            Optional<Salon> optionalSalon = salonRepository.findById(salonId);
+            if (!optionalSalon.isPresent()) {
+                return ResponseEntity.notFound().build(); // Salon not found
+            }
+            Salon salon = optionalSalon.get();
 
-	                double salonLatitude = coordinates.get("lat");
-	                double salonLongitude = coordinates.get("lng");
+            if (userLatitude != null && userLongitude != null) {
+                // Calculate distance using Haversine formula
+                double salonLat = salon.getLatitude();
+                double salonLon = salon.getLongitude();
+                double distance = calculateDistance(salonLat, salonLon, userLatitude, userLongitude);
 
-	                double distance = calculateDistance(user.getLatitude(), user.getLongitude(), salonLatitude, salonLongitude);
-	                double roundedDistance = Math.round(distance * 10.0) / 10.0;
-	                salon.setDistanceFromCustomer(roundedDistance);
-	                salonRepository.save(salon);
+                // Update salon distance
+                salon.setDistanceFromCustomer(distance);
+                salonRepository.save(salon);
 
-	                logger.info("Geocoding salon address: {}", salon.getAddress());
-	                logger.info("Calculated Distance: {} km", roundedDistance);
-	            } else {
-	                logger.warn("No results received from the geocoding service for salon: {}", salon.getName());
-	            }
-	        } else {
-	            logger.warn("Invalid response from the geocoding service for salon: {}", salon.getName());
-	        }
-	    } catch (HttpClientErrorException e) {
-	        logger.error("HTTP client error: {}", e.getMessage(), e);
-	    } catch (Exception e) {
-	        logger.error("An error occurred: {}", e.getMessage(), e);
-	    }
-	}
+                // Return success response with distance in the body
+                return ResponseEntity.ok("Distance updated successfully: " + distance + " km");
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("User's location coordinates are missing or not set");
+            }
+        } catch (Exception e) {
+            // Handle exception
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while updating salon distance.");
+        }
+    }
 
+    // Calculate distance using Haversine formula
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radius of the Earth
 
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c; // Convert to kilometers
 
+        return distance;
+    }
 
-	 public static double calculateDistance(double userLatitude, double userLongitude, double salonDistance) {
-		    // Assuming salonDistance is in kilometers
-		    return Math.abs(salonDistance - calculateDistance(0, 0, userLatitude, userLongitude));
-		}
+    public List<Salon> getSalonsWithin4KmRadius(double userLatitude, double userLongitude) {
+        // Define the fixed radius in kilometers
+        double radiusInKm = 4.0;
+    
+        // Retrieve all salons from the database
+        List<Salon> allSalons = salonRepository.findAll();
+    
+        // Filter salons within the 4 km radius
+        List<Salon> salonsWithinRadius = allSalons.stream()
+                .filter(salon -> {
+                    double distance = calculateDistance(userLatitude, userLongitude, salon.getLatitude(),
+                            salon.getLongitude());
+                    return distance <= radiusInKm;
+                })
+                .collect(Collectors.toList());
+    
+        // Return the sorted list of salons within the 4 km radius
+        return salonsWithinRadius;
+    }
+    @Transactional
+    public ResponseEntity<String> addServicesToSalon(Long salonId, List<ServiceDTO> serviceDTOs) {
+        Optional<Salon> optionalSalon = salonRepository.findById(salonId);
+    
+        if (optionalSalon.isPresent()) {
+            Salon salon = optionalSalon.get();
+            List<String> existingServices = new ArrayList<>();
+    
+            for (ServiceDTO serviceDTO : serviceDTOs) {
+                boolean serviceExists = salon.getServices().stream()
+                        .anyMatch(service -> service.getServiceName().equalsIgnoreCase(serviceDTO.getServiceName()));
+    
+                if (serviceExists) {
+                    existingServices.add(serviceDTO.getServiceName());
+                } else {
+                    ServicesProvided service = new ServicesProvided();
+                    service.setServiceName(serviceDTO.getServiceName().toUpperCase());
+                    service.setCost(serviceDTO.getCost());
+                    service.setSalon(salon);
+                    salon.getServices().add(service);
+                    serviceRepo.save(service);
+                }
+            }
+    
+            if (!existingServices.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Services already exist: " + existingServices);
+            } else {
+                salonRepository.save(salon);
+                return ResponseEntity.ok("Services added successfully to salon");
+            }
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Salon not found");
+        }
+    }
+    public ResponseEntity<?> getSalonByIdWithServicesAndReviews(Long salonId) {
+        try {
+            Salon salon = salonRepository.findSalonWithServicesAndReviewsById(salonId);
+            if (salon != null) {
+                return ResponseEntity.ok(salon);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to retrieve salon");
+        }
+    }
 
-		private static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-		    final int R = 6371; // Radius of the Earth in kilometers
+    public List<Salon> searchSalonsByService(String serviceName) {
+        // Implement logic to search for salons providing the specified service
+        return salonRepository.findByServices_ServiceName(serviceName);
+    }
 
-		    double dLat = Math.toRadians(lat2 - lat1);
-		    double dLon = Math.toRadians(lon2 - lon1);
-
-		    double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-		            Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-		            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-		    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-		   
-		    return R * c;
-		}
 }
-
-
-
-	
-
-
-		
-
-
-
-

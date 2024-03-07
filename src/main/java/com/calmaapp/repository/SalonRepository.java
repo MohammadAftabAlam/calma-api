@@ -21,8 +21,14 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
 
 
 	boolean existsByName(String name);
-	List<Salon> findSalonsByServicesProvideds_ServiceName(String serviceName);
+	// List<Salon> findSalonsByServicesProvided_ServiceName(String serviceName);
 	Salon findById(long salonId);
+
+
+    Salon findSalonWithServicesAndReviewsById(Long salonId);
+
+
+    List<Salon> findByServices_ServiceName(String serviceName);
 
 }
 

@@ -1,27 +1,36 @@
 package com.calmaapp.Controller;
 
-
-
 import com.calmaapp.UserType;
 import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.User;
+import com.calmaapp.exception.UnauthorizedAccessException;
+import com.calmaapp.payloads.*;
 import com.calmaapp.payloads.SalonDTO;
 import com.calmaapp.payloads.ServiceDTO;
 import com.calmaapp.repository.SalonRepository;
+import com.calmaapp.service.ImageUploadService;
 import com.calmaapp.service.SalonService;
+import com.calmaapp.service.UploadResponse;
 import com.calmaapp.service.UserService;
 import com.clmaapp.exception.SalonNotFoundException;
 import com.mysql.cj.util.StringUtils;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.management.ServiceNotFoundException;
 
@@ -31,43 +40,44 @@ public class SalonController {
 
     @Autowired
     private SalonService salonService;
-    
+
+    @Autowired
+    private ImageUploadService imageUploadService;
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private SalonRepository salonRepository;
-     
+
     private Logger logger;
-    
+
     @PostMapping("/{salonOwnerId}")
     public ResponseEntity<String> registerSalon(
             @PathVariable Long salonOwnerId,
             @RequestBody SalonDTO salonDTO) {
         try {
-            // Fetch the salon owner by salonOwnerId (replace this with your logic)
+            // Fetch the salon owner by salonOwnerId
             User salonOwner = userService.getUserById(salonOwnerId);
-
-            // Check if the user is a salon owner
-            if (salonOwner.getUserType() != UserType.SALON_OWNER) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Only salon owners can register salons");
-            }
-
-            // Check if a salon with the same name already exists
-            if (salonService.existsByName(salonDTO.getName())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Salon with this name already exists");
-            }
-
+    
             // Proceed with the salon registration
             salonService.registerSalon(salonOwner, salonDTO);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body("Salon registered successfully");
+    
+            return ResponseEntity.status(HttpStatus.CREATED).body("Details added successfully. Please proceed with authentication.");
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Only salon owners can register salons");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to register salon: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to register salon");
         }
     }
-
     
+
+
+
     @PutMapping("/{salonId}")
     public ResponseEntity<String> updateSalon(
             @PathVariable Long salonId,
@@ -83,30 +93,13 @@ public class SalonController {
         }
     }
 
-
-
-
-    
-     @PostMapping("/{salonId}/services")
-    public ResponseEntity<String> addServicesToSalon(
-            @PathVariable Long salonId,
+    @Transactional
+    @PostMapping("/{salonId}/services")
+    public ResponseEntity<String> addServicesToSalon(@PathVariable Long salonId,
             @RequestBody List<ServiceDTO> serviceDTOs) {
-        try {
-            ResponseEntity<String> response = salonService.addServicesToSalon(salonId, serviceDTOs);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return ResponseEntity.ok(response.getBody());
-            } else {
-                return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
-            }
-        } catch (Exception e) {
-            // Log the exception
-            logger.error("Failed to add services to salon with ID: " + salonId, e);
-            // Return a 500 Internal Server Error response
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add services to salon");
-        }
+        return salonService.addServicesToSalon(salonId, serviceDTOs);
     }
 
-          
     @DeleteMapping("/{salonId}/services/{serviceName}")
     public ResponseEntity<String> deleteServiceFromSalon(
             @PathVariable Long salonId,
@@ -123,9 +116,113 @@ public class SalonController {
         }
     }
 
+    // @PostMapping("/upload")
+    // public ResponseEntity<UploadResponse> uploadImages(@RequestParam("images") List<MultipartFile> images) {
+    //     try {
+    //         // Check if the number of images is within the allowed range
+    //         if (images.size() < 2 || images.size() > 5) {
+    //             return ResponseEntity.badRequest()
+    //                     .body(new UploadResponse("At least 2 images and at most 5 images are required.", null));
+    //         }
+
+    //         List<String> imagePaths = new ArrayList<>();
+
+    //         for (MultipartFile image : images) {
+    //             try {
+    //                 String imagePath = salonService.saveImage(image);
+    //                 imagePaths.add(imagePath);
+    //             } catch (IOException e) {
+    //                 throw new RuntimeException("Failed to save image: " + e.getMessage());
+    //             }
+    //         }
+
+    //         UploadResponse response = new UploadResponse("Images uploaded successfully", imagePaths);
+    //         return ResponseEntity.ok(response);
+    //     } catch (Exception e) {
+    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+    //                 .body(new UploadResponse("Failed to upload images: " + e.getMessage(), null));
+    //     }
+    // }
+
+    @DeleteMapping("/{salonId}")
+    public ResponseEntity<?> deleteSalon(@PathVariable Long salonId, Principal principal) {
+        try {
+            // Get the username of the currently authenticated salon owner
+            String salonOwnerUsername = principal.getName();
+
+            // Delete the salon with the given ID
+            salonService.deleteSalon(salonId, salonOwnerUsername);
+
+            return ResponseEntity.ok("Salon deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to delete salon: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{salonId}")
+    public ResponseEntity<?> getSalonByIdWithServicesAndReviews(@PathVariable Long salonId) {
+        return salonService.getSalonByIdWithServicesAndReviews(salonId);
+    }
+
+    @GetMapping("/withinRadius")
+    public ResponseEntity<List<Salon>> getSalonsWithin4KmRadius(@RequestParam("latitude") Double userLatitude,
+            @RequestParam("longitude") Double userLongitude) {
+        if (userLatitude == null || userLongitude == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            List<Salon> salonsWithinRadius = salonService.getSalonsWithin4KmRadius(userLatitude, userLongitude);
+            return ResponseEntity.ok(salonsWithinRadius);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Salon>> searchSalonsByService(@RequestParam("service") String serviceName) {
+        if (serviceName == null || serviceName.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            List<Salon> salons = salonService.searchSalonsByService(serviceName);
+            return ResponseEntity.ok(salons);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/upload/{salonId}")
+    public ResponseEntity<UploadResponse> uploadImages(
+            @PathVariable Long salonId,
+            @RequestParam("images") List<MultipartFile> images,
+            @RequestParam("licenseImage") MultipartFile licenseImage,
+            @RequestParam("electricityBillImage") MultipartFile electricityBillImage,
+            @RequestParam("taxReceiptImage") MultipartFile taxReceiptImage) {
+        try {
+            // Validate the number of images
+            int totalImages = images.size() + 3; // Add 3 for license, electricity bill, and tax receipt images
+            if (totalImages < 2 || totalImages > 5) {
+                return ResponseEntity.badRequest()
+                        .body(new UploadResponse("At least 2 salon images and one of each license, electricity bill, and tax receipt images are required.", null));
+            }
     
-   
+            // Upload images
+            List<String> imagePaths = imageUploadService.uploadImages(images, licenseImage, electricityBillImage, taxReceiptImage, salonId);
+    
+            // Return the final response
+            UploadResponse response = new UploadResponse("Verification complete, salon registered successfully", imagePaths);
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UploadResponse("Failed to upload images: " + e.getMessage(), null));
+        }
+    }
+    }
 
 
 
-}

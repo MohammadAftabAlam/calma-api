@@ -2,13 +2,14 @@ package com.calmaapp.userService;
 
 import com.calmaapp.entity.User;
 import com.calmaapp.repository.UserRepository;
+import com.calmaapp.authentication.JwtHelper;
+import com.calmaapp.payloads.UserDTO;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import com.calmaapp.authentication.JwtHelper;
-import com.calmaapp.payloads.UserDTO;
 
 import java.util.List;
 
@@ -30,22 +31,18 @@ public class UserLoginService {
 
         if (user != null) {
             if (passwordEncoder.matches(userDTO.getPassword(), user.getPassword())) {
-                List<String> roles = user.getRoles(); 
-                
-                jwtHelper.setUser(user);
-
-                String jwtToken = jwtHelper.generateToken(user.getPhoneNumber(), roles);
-
-          
+                // Authentication successful, generate JWT token
+                String jwtToken = jwtHelper.generateToken(user);
                 user.setJwtToken(jwtToken);
                 userRepository.save(user);
-
-                return ResponseEntity.ok("Login successful! Token: " + jwtToken);
+                return ResponseEntity.ok("Login successful! JWT Token: " + jwtToken);
             } else {
-                return ResponseEntity.status(401).body("Incorrect password. Please try again.");
+                // Incorrect password
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
             }
         } else {
-            return ResponseEntity.status(404).body("User not found. Please register.");
+            // User not found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
-    }
+    }        
 }
