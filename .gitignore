@@ -1,5 +1,5 @@
 # Ignore typical build directories
-target/
+
 
 # Except for specific target directories within src/main and src/test
 !.mvn/wrapper/maven-wrapper.jar
