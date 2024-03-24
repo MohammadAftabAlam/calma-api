@@ -3,7 +3,6 @@ package com.calmaapp.Controller;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.calmaapp.authentication.LogoutRequest;
 import com.calmaapp.authentication.TokenBlacklistService;
 import com.calmaapp.entity.Review;
 import com.calmaapp.entity.Salon;
@@ -33,11 +30,6 @@ import com.calmaapp.service.UserService;
 import com.calmaapp.userService.UserLoginService;
 import com.calmaapp.userService.UserLogoutService;
 import com.calmaapp.userService.UserRegistrationService;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
-
-import org.springframework.security.core.Authentication;
 
 
 @RestController
@@ -258,56 +250,7 @@ public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
         return reviewDTO;
     }
 
-//     @Transactional
-//     @GetMapping("/salons/{salonId}/distance")
-//     public ResponseEntity<Double> getDistanceForSalon(@PathVariable Long salonId, Authentication authentication) {
-//     try {
-//         // Check if user is authenticated and is an instance of User
-//         if (authentication != null && authentication.getPrincipal() instanceof User) {
-//             User user = (User) authentication.getPrincipal();
-//             Salon salon = salonService.getSalonById(salonId);
 
-//             // Check if the salon exists
-//             if (salon != null) {
-//                 // Update salon distance based on user's location
-//                 salonService.updateSalonDistance(salon, user);
-
-//                 // Get the updated distance from the salon object
-//                 Double distance = salon.getDistanceFromCustomer();
-                
-//                 // Check if distance is available
-//                 if (distance != null) {
-//                     // Return the distance in the response
-//                     return ResponseEntity.ok(distance);
-//                 } else {
-//                     // If distance is null, return not found
-//                     return ResponseEntity.notFound().build();
-//                 }
-//             } else {
-//                 // If salon is null, return not found
-//                 return ResponseEntity.notFound().build();
-//             }
-//         } else {
-//             // If user authentication fails, return unauthorized
-//             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//         }
-//     } catch (Exception e) {
-//         // Log the exception details
-//         e.printStackTrace();
-//         // If an exception occurs, return internal server error
-//         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//     }
-// }
-
-// @PutMapping("/{salonId}/updateDistance")
-//     public ResponseEntity<String> updateSalonDistance(@PathVariable Long salonId, HttpServletRequest request) {
-//         Salon salon = salonService.getSalonById(salonId);
-//         if (salon == null) {
-//             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Salon not found");
-//         }
-//         ResponseEntity<String> response = salonService.updateSalonDistance(salon, request);
-//         return response;
-//     }
 @PostMapping("/salon/update-distance/{salonId}")
 public ResponseEntity<String> updateSalonDistance(@PathVariable Long salonId,
                                                    @RequestParam Double userLatitude,

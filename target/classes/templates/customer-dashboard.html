@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard</title>
+    <style>
+        /* Add your CSS styles here */
+    </style>
+</head>
+<body>
+    <h1>Customer Dashboard</h1>
+    <form id="bookingForm">
+        <label for="service">Select Service:</label>
+        <select id="service">
+            <option value="HAIRCUT">Haircut</option>
+            <option value="HAIRTRIM">Hair Trim</option>
+            <option value="SHAVING">Shaving</option>
+        </select><br>
+        <label for="date">Select Date:</label>
+        <input type="date" id="date"><br>
+        <label for="time">Select Time:</label>
+        <input type="time" id="time"><br>
+        <button type="submit">Book Appointment</button>
+    </form>
+
+    <script>
+        document.getElementById('bookingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const service = document.getElementById('service').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const booking = {
+                service: service,
+                bookingDateTime: date + 'T' + time
+            };
+
+            fetch('/bookings/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(booking)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Booking request submitted successfully!');
+                } else {
+                    alert('Failed to submit booking request. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the booking request.');
+            });
+        });
+    </script>
+</body>
+</html>

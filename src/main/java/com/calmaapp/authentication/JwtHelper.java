@@ -34,48 +34,7 @@ public class JwtHelper {
     public static final long JWT_TOKEN_VALIDITY = 2 * 365 * 24 * 60 * 60; 
 
     @Autowired
-    private SecretKey secretKey; // Inject the SecretKey bean defined in your configuration class
-
-    // @Value("${jwt.secret}") // Inject the secret key from application.properties
-    // private String secretKey;
-
-    // public Long getUserIdFromToken(String token) {
-    //     try {
-    //         Claims claims = Jwts.parser()
-    //                             .setSigningKey(secretKey)
-    //                             .parseClaimsJws(token)
-    //                             .getBody();
-    
-    //         // Get the subject from claims
-    //         String subject = claims.getSubject();
-    
-    //         // Parse the subject directly as Long
-    //         Long userId = Long.valueOf(subject);
-
-    
-    //         return userId;
-    //     } catch (JwtException | NumberFormatException e) {
-    //         // Handle JWT parsing exception or NumberFormatException
-    //         throw new IllegalArgumentException("Invalid JWT token or user ID format", e);
-    //     }
-    // }
-    
-    // public String getUsernameFromToken(String token) {
-    //     try {
-    //         Claims claims = Jwts.parser()
-    //                             .setSigningKey(secretKey)
-    //                             .parseClaimsJws(token)
-    //                             .getBody();
-    
-    //         // Extract the username from the token claims
-    //         String username = claims.getSubject();
-    //         return username;
-    //     } catch (JwtException e) {
-    //         // Handle JWT parsing exception
-    //         throw new IllegalArgumentException("Invalid JWT token", e);
-    //     }
-    // }
-    
+    private SecretKey secretKey; // Inject the SecretKey bean 
 
     public String getPhoneNumberFromToken(String token) {
         Claims claims = getAllClaimsFromToken(token);
@@ -136,10 +95,7 @@ public class JwtHelper {
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
 
-    // public Boolean validateToken(String token, UserDetails userDetails) {
-    //     final String username = getUsernameFromToken(token);
-    //     return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    // }
+    
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String phoneNumber = getPhoneNumberFromToken(token);
         return (phoneNumber.equals(userDetails.getUsername()) && !isTokenExpired(token));

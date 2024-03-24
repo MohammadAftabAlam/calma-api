@@ -116,33 +116,7 @@ public class SalonController {
         }
     }
 
-    // @PostMapping("/upload")
-    // public ResponseEntity<UploadResponse> uploadImages(@RequestParam("images") List<MultipartFile> images) {
-    //     try {
-    //         // Check if the number of images is within the allowed range
-    //         if (images.size() < 2 || images.size() > 5) {
-    //             return ResponseEntity.badRequest()
-    //                     .body(new UploadResponse("At least 2 images and at most 5 images are required.", null));
-    //         }
-
-    //         List<String> imagePaths = new ArrayList<>();
-
-    //         for (MultipartFile image : images) {
-    //             try {
-    //                 String imagePath = salonService.saveImage(image);
-    //                 imagePaths.add(imagePath);
-    //             } catch (IOException e) {
-    //                 throw new RuntimeException("Failed to save image: " + e.getMessage());
-    //             }
-    //         }
-
-    //         UploadResponse response = new UploadResponse("Images uploaded successfully", imagePaths);
-    //         return ResponseEntity.ok(response);
-    //     } catch (Exception e) {
-    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-    //                 .body(new UploadResponse("Failed to upload images: " + e.getMessage(), null));
-    //     }
-    // }
+    
 
     @DeleteMapping("/{salonId}")
     public ResponseEntity<?> deleteSalon(@PathVariable Long salonId, Principal principal) {

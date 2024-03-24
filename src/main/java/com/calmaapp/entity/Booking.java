@@ -1,56 +1,43 @@
 package com.calmaapp.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "bookings")
 @Getter
 @Setter
-@Entity
-@Table(name = "booking")
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "customer_id")
+    private Long customerId;
+
+    @Column(name = "service_id")
+    private Long serviceId;
+
     @Column(name = "booking_date_time")
     private LocalDateTime bookingDateTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "salon_id")
-    private Salon salon;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_id")
-    private ServicesProvided service;
-
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private BookingStatus status;
+    @Column(name = "booking_status")
+    private BookingStatus bookingStatus;
 
-    @Column(name = "start_time")
-    private LocalDateTime startTime;
+    @Column(name = "requested_time")
+    private LocalDateTime requestedTime;
+    
+    @Column(name = "salon_id")
+    private Long salonId;
 
-    @Column(name = "end_time")
-    private LocalDateTime endTime;
+    // Define relationships with Customer, Service, Salon, etc. if needed
 
-    @Column(name = "user_notified")
-    private boolean userNotified;
-
-    @Column(name = "salon_notified")
-    private boolean salonNotified;
-
-    @Column(name = "confirmation_code")
-    private String confirmationCode;
-
-    // Constructors, getters, and setters
+    // Constructors, getters, and setters can be added as needed
 }
+

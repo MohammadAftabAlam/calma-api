@@ -7,11 +7,19 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class WebSocketController {
 
-    @MessageMapping("/booking")
-    @SendTo("/topic/booking")
-    public String handleBookingNotification(String message) {
-        // Process the booking notification message
-        return "New booking request received: " + message;
+    @MessageMapping("/notifySalonOwners")
+    @SendTo("/topic/bookings")
+    public String notifySalonOwners(String message) {
+        // Implement logic to notify salon owners about new booking requests
+        return "New booking request received";
+    }
+
+    @MessageMapping("/sendConfirmation")
+    @SendTo("/topic/customerConfirmations")
+    public String sendConfirmation(String message) {
+        // Implement logic to send confirmation messages to customers
+        return "Your booking has been confirmed. Thank you!";
     }
 }
+
 

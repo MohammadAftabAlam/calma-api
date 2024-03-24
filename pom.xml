@@ -15,7 +15,7 @@
 	<name>calma-1</name>
 	<description>This is backend api</description>
 	<properties>
-		<java.version>18</java.version>
+		<java.version>11</java.version>
 	</properties>
 	<dependencies>
 
