@@ -1,10 +1,12 @@
-HELP.md
+# Ignore typical build directories
 target/
+
+# Except for specific target directories within src/main and src/test
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Ignore STS (Spring Tool Suite) files
 .apt_generated
 .classpath
 .factorypath
@@ -13,13 +15,13 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+# Ignore IntelliJ IDEA files
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# Ignore NetBeans files
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,5 +31,5 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# Ignore Visual Studio Code settings
 .vscode/
