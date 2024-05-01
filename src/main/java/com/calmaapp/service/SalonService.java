@@ -56,48 +56,48 @@ public class SalonService {
 
     @Autowired
     private DirectionsService directionsService;
- @Autowired
+    @Autowired
     private ImageUploadService uploadImage;
 
     @Autowired
     private ServiceRepository serviceRepo;
 
     @Autowired
-private ImageUploadService imageUploadService;
+    private ImageUploadService imageUploadService;
 
-public void registerSalon(User salonOwner, SalonDTO salonDTO) {
-    // Check if the salon owner is valid and has the correct user type
-    if (salonOwner == null || salonOwner.getUserType() != UserType.SALON_OWNER) {
-        throw new UnauthorizedAccessException("Only salon owners can register salons");
+    public void registerSalon(User salonOwner, SalonDTO salonDTO) {
+        // Check if the salon owner is valid and has the correct user type
+        if (salonOwner == null || salonOwner.getUserType() != UserType.SALON_OWNER) {
+            throw new UnauthorizedAccessException("Only salon owners can register salons");
+        }
+
+        // Check if the salon name already exists
+        if (existsByName(salonDTO.getName())) {
+            throw new RuntimeException("Salon with this name already exists");
+        }
+
+        // Convert the salon address to coordinates (latitude and longitude) using the geocoding service
+        Coordinates coordinates = geocodingService.getCoordinatesFromAddress(salonDTO.getAddress());
+
+        // Create a new `Salon` object
+        Salon salon = new Salon();
+
+        // Set the salon properties
+        salon.setName(salonDTO.getName());
+        salon.setAddress(salonDTO.getAddress());
+        salon.setContactInfo(salonDTO.getContactInfo());
+        salon.setOpeningTime(salonDTO.getOpeningTime());
+        salon.setClosingTime(salonDTO.getClosingTime());
+        salon.setLatitude(coordinates.getLatitude()); // Set the latitude
+        salon.setLongitude(coordinates.getLongitude()); // Set the longitude
+        salon.setRating(0.0); // Set the default rating to 0.0
+        salon.setOwner(salonOwner);
+
+        // Save the salon to the database
+        salonRepository.save(salon);
     }
 
-    // Check if the salon name already exists
-    if (existsByName(salonDTO.getName())) {
-        throw new RuntimeException("Salon with this name already exists");
-    }
 
-    // Convert the salon address to coordinates (latitude and longitude) using the geocoding service
-    Coordinates coordinates = geocodingService.getCoordinatesFromAddress(salonDTO.getAddress());
-
-    // Create a new `Salon` object
-    Salon salon = new Salon();
-
-    // Set the salon properties
-    salon.setName(salonDTO.getName());
-    salon.setAddress(salonDTO.getAddress());
-    salon.setContactInfo(salonDTO.getContactInfo());
-    salon.setOpeningTime(salonDTO.getOpeningTime());
-    salon.setClosingTime(salonDTO.getClosingTime());
-    salon.setLatitude(coordinates.getLatitude()); // Set the latitude
-    salon.setLongitude(coordinates.getLongitude()); // Set the longitude
-    salon.setRating(0.0); // Set the default rating to 0.0
-    salon.setOwner(salonOwner);
-
-    // Save the salon to the database
-    salonRepository.save(salon);
-}
-
-    
     @Transactional
     public void deleteServiceByNameFromSalon(Long salonId, String serviceName) {
         Salon salon = salonRepository.findById(salonId)
@@ -208,7 +208,7 @@ public void registerSalon(User salonOwner, SalonDTO salonDTO) {
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double distance = R * c; // Convert to kilometers
 
@@ -218,10 +218,10 @@ public void registerSalon(User salonOwner, SalonDTO salonDTO) {
     public List<Salon> getSalonsWithin4KmRadius(double userLatitude, double userLongitude) {
         // Define the fixed radius in kilometers
         double radiusInKm = 4.0;
-    
+
         // Retrieve all salons from the database
         List<Salon> allSalons = salonRepository.findAll();
-    
+
         // Filter salons within the 4 km radius
         List<Salon> salonsWithinRadius = allSalons.stream()
                 .filter(salon -> {
@@ -230,22 +230,23 @@ public void registerSalon(User salonOwner, SalonDTO salonDTO) {
                     return distance <= radiusInKm;
                 })
                 .collect(Collectors.toList());
-    
+
         // Return the sorted list of salons within the 4 km radius
         return salonsWithinRadius;
     }
+
     @Transactional
     public ResponseEntity<String> addServicesToSalon(Long salonId, List<ServiceDTO> serviceDTOs) {
         Optional<Salon> optionalSalon = salonRepository.findById(salonId);
-    
+
         if (optionalSalon.isPresent()) {
             Salon salon = optionalSalon.get();
             List<String> existingServices = new ArrayList<>();
-    
+
             for (ServiceDTO serviceDTO : serviceDTOs) {
                 boolean serviceExists = salon.getServices().stream()
                         .anyMatch(service -> service.getServiceName().equalsIgnoreCase(serviceDTO.getServiceName()));
-    
+
                 if (serviceExists) {
                     existingServices.add(serviceDTO.getServiceName());
                 } else {
@@ -257,7 +258,7 @@ public void registerSalon(User salonOwner, SalonDTO salonDTO) {
                     serviceRepo.save(service);
                 }
             }
-    
+
             if (!existingServices.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body("Services already exist: " + existingServices);

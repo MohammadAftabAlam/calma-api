@@ -25,4 +25,3 @@ public class ServicesProvided {
     @JsonIgnore
     private Salon salon;
 }
-

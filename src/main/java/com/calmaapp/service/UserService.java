@@ -1,27 +1,20 @@
 package com.calmaapp.service;
 
+import com.calmaapp.entity.User;
+import com.calmaapp.repository.UserRepository;
+import com.calmaapp.entity.Review;
+import com.calmaapp.entity.Salon;
+import com.calmaapp.repository.SalonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import com.calmaapp.payloads.*;
 
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.calmaapp.entity.Review;
-import com.calmaapp.entity.Salon;
-import com.calmaapp.entity.User;
-
-import com.calmaapp.payloads.ReviewDTO;
-import com.calmaapp.payloads.UserDTO;
-import com.calmaapp.repository.SalonRepository;
-import com.calmaapp.repository.UserRepository;
 
 @Service
 public class UserService {
@@ -29,14 +22,33 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public void updateUserLocation(Long userId, double latitude, double longitude) {
-        Optional<User> optionalUser = userRepository.findById(userId);
-        optionalUser.ifPresent(user -> {
+    @Autowired
+    private SalonRepository salonRepository;
+
+    public void updateUserLocation(String phoneNumber, double latitude, double longitude) {
+        User user = userRepository.findByPhoneNumber(phoneNumber);
+        if(user !=null) {
             user.setLatitude(latitude);
             user.setLongitude(longitude);
             userRepository.save(user);
-        });
+        }
+        else {
+            throw new RuntimeException("User not found with phone number: " + phoneNumber);
+        }
     }
+
+
+    // public void updateUserLocation(String phoneNumber, double latitude, double longitude) {
+    //     User user = userRepository.findByPhoneNumber(phoneNumber);
+    //     if (user != null) {
+    //         user.setLatitude(latitude);
+    //         user.setLongitude(longitude);
+    //         userRepository.save(user);
+    //     } else {
+    //         throw new ResourceNotFoundException("User not found with phone number: " + phoneNumber);
+    //     }
+    // }
+
 
     public boolean updateUserDetails(Long userId, UserDTO updatedUserDTO) {
         Optional<User> optionalUser = userRepository.findById(userId);
@@ -60,19 +72,13 @@ public class UserService {
         return userOptional.orElse(null);
     }
 
-    public User getUserByPhoneNumber(String name) {
-        return userRepository.findByPhoneNumber(name);
+    public User getUserByPhoneNumber(String phoneNumber) {
+        return userRepository.findByPhoneNumber(phoneNumber);
     }
-
-    @Autowired
-    private SalonRepository salonRepository;
-
-    @Autowired
-    private UserService userService;
 
     public ResponseEntity<String> addReviewToSalon(Long salonId, ReviewDTO reviewDTO, Principal principal) {
         try {
-            User user = userService.getUserByPhoneNumber(principal.getName());
+            User user = getUserByPhoneNumber(principal.getName());
             Salon salon = salonRepository.findById(salonId).orElse(null);
 
             if (user != null && salon != null) {
@@ -128,4 +134,11 @@ public class UserService {
     public User findByResetToken(String resetToken) {
         return userRepository.findByResetToken(resetToken);
     }
+
+
 }
+
+
+
+
+

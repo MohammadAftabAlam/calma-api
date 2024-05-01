@@ -46,7 +46,6 @@ public class UserDTO {
 		this.age = user.getAge();
 		this.location = user.getLocation();
 		this.gender = user.getGender();
-		// jwtToken might not be needed for update, so it's not included here
 	}
 
    

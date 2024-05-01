@@ -1,6 +1,7 @@
 package com.calmaapp.Controller;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private SalonService salonService;
 
@@ -57,22 +58,22 @@ public class UserController {
 
     @Autowired
     private UserLogoutService userLogoutService;
-    
+
     @Autowired
     private SalonRepository salonRepository;
-    
+
     @Autowired
     private OTPVerificationService otpVerificationService;
 
     private Logger log;
-  
+
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody UserDTO userDTO) {
         return userRegistrationService.registerUser(userDTO);
     }
 
 
-    
+
     private String validatePassword(String password) {
         String passwordPattern = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()-_=+{}\\[\\]:;\"'<>,.?/\\\\])[A-Za-z\\d!@#$%^&*()-_=+{}\\[\\]:;\"'<>,.?/\\\\]{8,20}$";
         if (!password.matches(passwordPattern)) {
@@ -80,49 +81,61 @@ public class UserController {
         }
         return "Password is valid";
     }
-    
 
 
 
-	@PostMapping("/login")
-public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
-    try {
-        // Attempt to login the user based on the provided phone number
-        ResponseEntity<String> response = userLoginService.loginUser(userDTO);
-        
-        if (response.getStatusCode().is2xxSuccessful()) {
-            // If login successful, return the JWT token in the response
-            return ResponseEntity.ok(response.getBody());
-        } else {
-            // If login failed, return the response as it is
-            return response;
-        }
-    } catch (Exception e) {
-        // Handle any exceptions that occur during login process
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An error occurred during login process: " + e.getMessage());
-    }
-}
 
-     
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<UserDTO> getUserDetails(@PathVariable Long userId) {
+// 	@PostMapping("/login")
+// public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
+//     try {
+//         // Attempt to login the user based on the provided phone number
+//         ResponseEntity<String> response = userLoginService.loginUser(userDTO);
+
+//         if (response.getStatusCode().is2xxSuccessful()) {
+//             // If login successful, return the JWT token in the response
+//             return ResponseEntity.ok(response.getBody());
+//         } else {
+//             // If login failed, return the response as it is
+//             return response;
+//         }
+//     } catch (Exception e) {
+//         // Handle any exceptions that occur during login process
+//         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                 .body("An error occurred during login process: " + e.getMessage());
+//     }
+// }
+
+    // @PostMapping("/login")
+    // public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
+    //     String response = userLoginService.loginUser(userDTO);
+
+    //     if (response.equals("User not found")) {
+    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    //     } else if (response.equals("Invalid credentials")) {
+    //         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    //     } else {
+    //         return ResponseEntity.ok(response);
+    //     }
+    // }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> loginUser(@RequestBody UserDTO userDTO) {
+        ResponseEntity<Map<String, String>> responseEntity;
         try {
-            User user = userService.getUserById(userId);
-
-            if (user != null) {
-                // Map User entity to UserDTO if needed
-                UserDTO userDTO = new UserDTO(user);
-                return ResponseEntity.ok(userDTO);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
+            responseEntity = userLoginService.loginUser(userDTO);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
+        return responseEntity;
     }
 
-    
+
+
+
+
+
 
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(@RequestBody Map<String, String> requestParams) {
@@ -141,13 +154,39 @@ public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
     }
 
 
-    @PutMapping("/updateLocation/{userId}")
+    // @PutMapping("/updateLocation/{userId}")
+    // public ResponseEntity<String> updateUserLocation(
+    //         @PathVariable Long userId,
+    //         @RequestBody Map<String, Double> location) {
+    //     try {
+    //         // Fetch the user by userId
+    //         User user = userService.getUserById(userId);
+
+    //         if (user != null) {
+    //             // Extract latitude and longitude from the request body
+    //             Double latitude = location.get("latitude");
+    //             Double longitude = location.get("longitude");
+
+    //             // Update user location
+    //             userService.updateUserLocation(userId, latitude, longitude);
+
+    //             return ResponseEntity.ok("User location updated successfully");
+    //         } else {
+    //             return ResponseEntity.status(404).body("User not found");
+    //         }
+    //     } catch (Exception e) {
+    //         // Handle exception
+    //         return ResponseEntity.status(500).body("Failed to update user location");
+    //     }
+    // }
+
+    @PutMapping("/updateLocation/{phoneNumber}")
     public ResponseEntity<String> updateUserLocation(
-            @PathVariable Long userId,
+            @PathVariable String phoneNumber,
             @RequestBody Map<String, Double> location) {
         try {
             // Fetch the user by userId
-            User user = userService.getUserById(userId);
+            User user = userRepository.findByPhoneNumber(phoneNumber);
 
             if (user != null) {
                 // Extract latitude and longitude from the request body
@@ -155,7 +194,7 @@ public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
                 Double longitude = location.get("longitude");
 
                 // Update user location
-                userService.updateUserLocation(userId, latitude, longitude);
+                userService.updateUserLocation(phoneNumber, latitude, longitude);
 
                 return ResponseEntity.ok("User location updated successfully");
             } else {
@@ -166,7 +205,7 @@ public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
             return ResponseEntity.status(500).body("Failed to update user location");
         }
     }
-    
+
     @PutMapping("/updateUser/{userId}")
     public ResponseEntity<String> updateUserDetails(
             @PathVariable Long userId,
@@ -188,7 +227,7 @@ public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
             }
         } catch (Exception e) {
-            
+
             log.error("Exception while updating user details", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update user details");
         }
@@ -241,8 +280,8 @@ public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-  
-    
+
+
     private ReviewDTO mapToReviewDTO(Review review) {
         ReviewDTO reviewDTO = new ReviewDTO();
         reviewDTO.setRating(review.getRating());
@@ -251,18 +290,29 @@ public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
     }
 
 
-@PostMapping("/salon/update-distance/{salonId}")
-public ResponseEntity<String> updateSalonDistance(@PathVariable Long salonId,
-                                                   @RequestParam Double userLatitude,
-                                                   @RequestParam Double userLongitude) {
-    try {
-        return salonService.updateSalonDistance(salonId, userLatitude, userLongitude);
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An error occurred while processing the request.");
+    @PostMapping("/salon/update-distance/{salonId}")
+    public ResponseEntity<String> updateSalonDistance(@PathVariable Long salonId,
+                                                      @RequestParam Double userLatitude,
+                                                      @RequestParam Double userLongitude) {
+        try {
+            return salonService.updateSalonDistance(salonId, userLatitude, userLongitude);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while processing the request.");
+        }
     }
-}
-   
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<String> verifyOTP(@RequestParam String email, @RequestParam String enteredOTP) {
+        boolean isOTPVerified = otpVerificationService.verifyOTP(email, enteredOTP);
+        if (isOTPVerified) {
+            // Proceed with the action (e.g., user registration)
+            return ResponseEntity.ok("OTP verification successful");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid OTP. Please try again.");
+        }
+    }
+
 }
 

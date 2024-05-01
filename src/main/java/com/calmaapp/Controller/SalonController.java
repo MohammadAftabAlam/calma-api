@@ -5,9 +5,8 @@ import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.User;
 import com.calmaapp.exception.UnauthorizedAccessException;
 import com.calmaapp.payloads.*;
-import com.calmaapp.payloads.SalonDTO;
-import com.calmaapp.payloads.ServiceDTO;
 import com.calmaapp.repository.SalonRepository;
+import com.calmaapp.service.ExpertEmployeeService;
 import com.calmaapp.service.ImageUploadService;
 import com.calmaapp.service.SalonService;
 import com.calmaapp.service.UploadResponse;
@@ -59,10 +58,10 @@ public class SalonController {
         try {
             // Fetch the salon owner by salonOwnerId
             User salonOwner = userService.getUserById(salonOwnerId);
-    
+
             // Proceed with the salon registration
             salonService.registerSalon(salonOwner, salonDTO);
-    
+
             return ResponseEntity.status(HttpStatus.CREATED).body("Details added successfully. Please proceed with authentication.");
         } catch (UnauthorizedAccessException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Only salon owners can register salons");
@@ -74,7 +73,7 @@ public class SalonController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to register salon");
         }
     }
-    
+
 
 
 
@@ -96,7 +95,7 @@ public class SalonController {
     @Transactional
     @PostMapping("/{salonId}/services")
     public ResponseEntity<String> addServicesToSalon(@PathVariable Long salonId,
-            @RequestBody List<ServiceDTO> serviceDTOs) {
+                                                     @RequestBody List<ServiceDTO> serviceDTOs) {
         return salonService.addServicesToSalon(salonId, serviceDTOs);
     }
 
@@ -116,7 +115,7 @@ public class SalonController {
         }
     }
 
-    
+
 
     @DeleteMapping("/{salonId}")
     public ResponseEntity<?> deleteSalon(@PathVariable Long salonId, Principal principal) {
@@ -141,7 +140,7 @@ public class SalonController {
 
     @GetMapping("/withinRadius")
     public ResponseEntity<List<Salon>> getSalonsWithin4KmRadius(@RequestParam("latitude") Double userLatitude,
-            @RequestParam("longitude") Double userLongitude) {
+                                                                @RequestParam("longitude") Double userLongitude) {
         if (userLatitude == null || userLongitude == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -184,10 +183,10 @@ public class SalonController {
                 return ResponseEntity.badRequest()
                         .body(new UploadResponse("At least 2 salon images and one of each license, electricity bill, and tax receipt images are required.", null));
             }
-    
-            // Upload images
+
+            // Upload images to Cloudinary and update Salon entity
             List<String> imagePaths = imageUploadService.uploadImages(images, licenseImage, electricityBillImage, taxReceiptImage, salonId);
-    
+
             // Return the final response
             UploadResponse response = new UploadResponse("Verification complete, salon registered successfully", imagePaths);
             return ResponseEntity.ok(response);
@@ -196,7 +195,37 @@ public class SalonController {
                     .body(new UploadResponse("Failed to upload images: " + e.getMessage(), null));
         }
     }
+
+    @Autowired
+    private ExpertEmployeeService expertEmployeeService;
+
+    @PostMapping("/upload/expert")
+    public ResponseEntity<?> uploadExpertDetails(
+            @RequestParam String expertName,
+            @RequestParam String expertSkill,
+            @RequestParam MultipartFile expertCertificationImage,
+            @RequestParam MultipartFile expertImage,
+            @RequestParam int expertExperience,
+            @RequestParam String expertSpecialization,
+            @RequestParam Long salonId) {
+
+        try {
+            // Call the service method to upload expert details
+            ExpertEmployeeDTO expertEmployeeDTO = expertEmployeeService.uploadExpertDetails(
+                    expertName, expertSkill, expertCertificationImage, expertImage,
+                    expertExperience, expertSpecialization, salonId);
+
+            // Return the DTO with uploaded expert details
+            return ResponseEntity.status(HttpStatus.CREATED).body(expertEmployeeDTO);
+        } catch (IOException e) {
+            // Handle any IO exception occurred during file uploading
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload expert details: " + e.getMessage());
+        }
     }
+
+
+
+}
 
 
 

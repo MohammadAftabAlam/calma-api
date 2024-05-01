@@ -21,15 +21,13 @@ public class SalonDTO {
         this.address=salon.getAddress();
         this.contactInfo=salon.getContactInfo();
         this.name=salon.getName();
-        this.openingTime=salon.getOpeningTime();
-        this.closingTime=salon.getClosingTime();
         this.rating=salon.getRating();
-        this.owner = salon.getOwner(); 
-        this.latitude = salon.getLatitude(); 
+        this.owner = salon.getOwner();
+        this.latitude = salon.getLatitude();
         this.longitude = salon.getLongitude();
-        this.salonImages = new ArrayList<>(); 
-        
-        
+        this.salonImages = new ArrayList<>();
+
+
     }
     private Long id;
     private String name;
@@ -51,26 +49,43 @@ public class SalonDTO {
     public void setLicenseImage(MultipartFile licenseImage) {
         this.licenseImage = licenseImage;
     }
-    
+
     public void setElectricityBillImage(MultipartFile electricityBillImage) {
         this.electricityBillImage = electricityBillImage;
     }
-    
+
     public void setTaxReceiptImage(MultipartFile taxReceiptImage) {
         this.taxReceiptImage = taxReceiptImage;
     }
-    
+
     // Getters for images
     public MultipartFile getLicenseImage() {
         return licenseImage;
     }
-    
+
     public MultipartFile getElectricityBillImage() {
         return electricityBillImage;
     }
-    
+
     public MultipartFile getTaxReceiptImage() {
         return taxReceiptImage;
+    }
+
+    public String getOpeningTime() {
+        return openingTime;
+    }
+
+    public void setOpeningTime(CharSequence openingTime) { // Change parameter type to CharSequence
+        this.openingTime = openingTime != null ? openingTime.toString() : null;
+    }
+
+    // Getter and setter for closingTime
+    public String getClosingTime() {
+        return closingTime;
+    }
+
+    public void setClosingTime(CharSequence closingTime) { // Change parameter type to CharSequence
+        this.closingTime = closingTime != null ? closingTime.toString() : null;
     }
 }
 

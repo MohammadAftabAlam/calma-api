@@ -23,19 +23,23 @@ import javax.crypto.SecretKey;
 
 @Component
 public class JwtHelper {
-	
-	
-	  public void setUser(User user) {
-	        this.user = user;
-	    }
-	
-	private User user;
 
-    public static final long JWT_TOKEN_VALIDITY = 2 * 365 * 24 * 60 * 60; 
 
-    @Autowired
-    private SecretKey secretKey; // Inject the SecretKey bean 
+    public void setUser(User user) {
+        this.user = user;
+    }
 
+    private User user;
+
+    public static final long JWT_TOKEN_VALIDITY = 2 * 365 * 24 * 60 * 60;
+
+    // @Autowired
+    // private SecretKey secretKey; // Inject the SecretKey bean
+    private final SecretKey secretKey;
+
+    public JwtHelper() {
+        this.secretKey = SecretKeyGenerator.getSecretKey();
+    }
     public String getPhoneNumberFromToken(String token) {
         Claims claims = getAllClaimsFromToken(token);
         String encodedPhoneNumber = claims.getSubject();
@@ -43,7 +47,7 @@ public class JwtHelper {
         String phoneNumber = new String(Base64.getDecoder().decode(encodedPhoneNumber));
         return phoneNumber;
     }
-    
+
 
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
@@ -62,21 +66,21 @@ public class JwtHelper {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(new Date());
     }
-    
-  
 
-   
+
+
+
     public String doGenerateToken(Map<String, Object> claims, String username) {
         // Encode the username using Base64 encoding
         String encodedSubject = Base64.getEncoder().encodeToString(username.getBytes(StandardCharsets.UTF_8));
-    
+
         // Encode any non-base64-safe claim values
         for (Map.Entry<String, Object> entry : claims.entrySet()) {
             if (!isBase64Safe(entry.getValue())) {
                 entry.setValue(Base64.getEncoder().encodeToString(entry.getValue().toString().getBytes(StandardCharsets.UTF_8)));
             }
         }
-    
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(encodedSubject)
@@ -85,7 +89,7 @@ public class JwtHelper {
                 .signWith(SignatureAlgorithm.HS512, secretKey)
                 .compact();
     }
-    
+
 
 
     private boolean isBase64Safe(Object value) {
@@ -95,18 +99,18 @@ public class JwtHelper {
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
 
-    
+
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String phoneNumber = getPhoneNumberFromToken(token);
         return (phoneNumber.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
-    
+
 
     public String generateToken(User user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null");
         }
-    
+
         Map<String, Object> claims = new HashMap<>();
         // Use username instead of user ID
         String phoneNumber = user.getPhoneNumber();
@@ -114,11 +118,11 @@ public class JwtHelper {
             phoneNumber = Base64.getEncoder().encodeToString(phoneNumber.getBytes(StandardCharsets.UTF_8));
         }
         claims.put("phoneNumber", phoneNumber); // Assuming getUsername() returns the username
-    
+
         // Add additional claims or customization as needed
-    
+
         return doGenerateToken(claims, user.getPhoneNumber()); // Pass the username as the subject
     }
-    
+
 
 }

@@ -11,7 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserLoginService {
@@ -25,24 +27,35 @@ public class UserLoginService {
     @Autowired
     private JwtHelper jwtHelper;
 
-    public ResponseEntity<String> loginUser(UserDTO userDTO) {
+
+    public ResponseEntity<Map<String, String>> loginUser(UserDTO userDTO) {
         String phoneNumber = userDTO.getPhoneNumber();
         User user = userRepository.findByPhoneNumber(phoneNumber);
 
-        if (user != null) {
-            if (passwordEncoder.matches(userDTO.getPassword(), user.getPassword())) {
-                // Authentication successful, generate JWT token
-                String jwtToken = jwtHelper.generateToken(user);
-                user.setJwtToken(jwtToken);
-                userRepository.save(user);
-                return ResponseEntity.ok("Login successful! JWT Token: " + jwtToken);
-            } else {
-                // Incorrect password
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-            }
-        } else {
-            // User not found
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        if (user == null) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "User not found");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-    }        
+
+        if (passwordEncoder.matches(userDTO.getPassword(), user.getPassword())) {
+            // Successful login logic
+            String jwtToken = jwtHelper.generateToken(user);
+            user.setJwtToken(jwtToken);
+            userRepository.save(user);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("jwtToken", jwtToken);
+            return ResponseEntity.ok().body(response);
+        } else {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Invalid password");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
 }
+
+
+    
+            
+

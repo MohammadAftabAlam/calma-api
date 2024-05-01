@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Getter;
@@ -62,7 +63,8 @@ public class User implements UserDetails {
     private String location;
     private String gender;
 
-    // Implement UserDetails methods
+    @OneToMany(mappedBy = "userId")
+    private List<Distance> distances;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -110,12 +112,12 @@ public class User implements UserDetails {
         return true;
     }
 
-    
-   
 
-	public List<String> getRoles() {
-		List<String> roles = new ArrayList<>();
-        
+
+
+    public List<String> getRoles() {
+        List<String> roles = new ArrayList<>();
+
         // Assuming you have a field named 'userType' in your User entity
         // Map userType to roles
         switch (this.userType) {
@@ -126,12 +128,12 @@ public class User implements UserDetails {
                 roles.add("ROLE_SALON_OWNER");
                 break;
             // Add more cases for other user types if needed
-            
+
             default:
                 break;
         }
-        
+
         return roles;
-	}
+    }
 
 }

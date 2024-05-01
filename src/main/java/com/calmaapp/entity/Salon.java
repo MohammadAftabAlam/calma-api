@@ -38,12 +38,12 @@ public class Salon {
     private String address;
     private String contactInfo;
 
-    private double latitude; 
+    private double latitude;
     private double longitude;
 
     private String openingTime;
     private String closingTime;
-    
+
     private double rating;
 
     @OneToMany(mappedBy = "salon", cascade = CascadeType.ALL)
@@ -54,7 +54,7 @@ public class Salon {
     private Double distanceFromCustomer;
 
     @ElementCollection
-    private List<String> salonImagePath; 
+    private List<String> salonImageUrls;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
@@ -64,8 +64,18 @@ public class Salon {
 
     @OneToMany(mappedBy = "salon", fetch = FetchType.EAGER) // Fetch services eagerly
     private List<ServicesProvided> services;
-    
-    private String licenseImagePath;
-    private String electricityBillImagePath;
-    private String taxReceiptImagePath;
+
+    private String licenseImageUrls;
+    private String electricityBillImageUrls;
+    private String taxReceiptImageUrls;
+
+    @OneToMany(mappedBy = "salon", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<ExpertEmployee> expertEmployees = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "salon")
+    private List<Distance> distances;
+
+
 }
