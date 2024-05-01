@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -32,7 +33,6 @@ import com.calmaapp.userService.UserLoginService;
 import com.calmaapp.userService.UserLogoutService;
 import com.calmaapp.userService.UserRegistrationService;
 
-
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -51,7 +51,6 @@ public class UserController {
 
     @Autowired
     private SalonService salonService;
-
 
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
@@ -72,50 +71,46 @@ public class UserController {
         return userRegistrationService.registerUser(userDTO);
     }
 
-
-
     private String validatePassword(String password) {
         String passwordPattern = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*()-_=+{}\\[\\]:;\"'<>,.?/\\\\])[A-Za-z\\d!@#$%^&*()-_=+{}\\[\\]:;\"'<>,.?/\\\\]{8,20}$";
         if (!password.matches(passwordPattern)) {
-            throw new IllegalArgumentException("Password must be between 8 and 20 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
+            throw new IllegalArgumentException(
+                    "Password must be between 8 and 20 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
         }
         return "Password is valid";
     }
 
+    // @PostMapping("/login")
+    // public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
+    // try {
+    // // Attempt to login the user based on the provided phone number
+    // ResponseEntity<String> response = userLoginService.loginUser(userDTO);
 
-
-
-// 	@PostMapping("/login")
-// public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
-//     try {
-//         // Attempt to login the user based on the provided phone number
-//         ResponseEntity<String> response = userLoginService.loginUser(userDTO);
-
-//         if (response.getStatusCode().is2xxSuccessful()) {
-//             // If login successful, return the JWT token in the response
-//             return ResponseEntity.ok(response.getBody());
-//         } else {
-//             // If login failed, return the response as it is
-//             return response;
-//         }
-//     } catch (Exception e) {
-//         // Handle any exceptions that occur during login process
-//         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                 .body("An error occurred during login process: " + e.getMessage());
-//     }
-// }
+    // if (response.getStatusCode().is2xxSuccessful()) {
+    // // If login successful, return the JWT token in the response
+    // return ResponseEntity.ok(response.getBody());
+    // } else {
+    // // If login failed, return the response as it is
+    // return response;
+    // }
+    // } catch (Exception e) {
+    // // Handle any exceptions that occur during login process
+    // return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+    // .body("An error occurred during login process: " + e.getMessage());
+    // }
+    // }
 
     // @PostMapping("/login")
     // public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
-    //     String response = userLoginService.loginUser(userDTO);
+    // String response = userLoginService.loginUser(userDTO);
 
-    //     if (response.equals("User not found")) {
-    //         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    //     } else if (response.equals("Invalid credentials")) {
-    //         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-    //     } else {
-    //         return ResponseEntity.ok(response);
-    //     }
+    // if (response.equals("User not found")) {
+    // return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    // } else if (response.equals("Invalid credentials")) {
+    // return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    // } else {
+    // return ResponseEntity.ok(response);
+    // }
     // }
 
     @PostMapping("/login")
@@ -130,12 +125,6 @@ public class UserController {
         }
         return responseEntity;
     }
-
-
-
-
-
-
 
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(@RequestBody Map<String, String> requestParams) {
@@ -153,31 +142,30 @@ public class UserController {
         return ResponseEntity.ok("User logged out successfully");
     }
 
-
     // @PutMapping("/updateLocation/{userId}")
     // public ResponseEntity<String> updateUserLocation(
-    //         @PathVariable Long userId,
-    //         @RequestBody Map<String, Double> location) {
-    //     try {
-    //         // Fetch the user by userId
-    //         User user = userService.getUserById(userId);
+    // @PathVariable Long userId,
+    // @RequestBody Map<String, Double> location) {
+    // try {
+    // // Fetch the user by userId
+    // User user = userService.getUserById(userId);
 
-    //         if (user != null) {
-    //             // Extract latitude and longitude from the request body
-    //             Double latitude = location.get("latitude");
-    //             Double longitude = location.get("longitude");
+    // if (user != null) {
+    // // Extract latitude and longitude from the request body
+    // Double latitude = location.get("latitude");
+    // Double longitude = location.get("longitude");
 
-    //             // Update user location
-    //             userService.updateUserLocation(userId, latitude, longitude);
+    // // Update user location
+    // userService.updateUserLocation(userId, latitude, longitude);
 
-    //             return ResponseEntity.ok("User location updated successfully");
-    //         } else {
-    //             return ResponseEntity.status(404).body("User not found");
-    //         }
-    //     } catch (Exception e) {
-    //         // Handle exception
-    //         return ResponseEntity.status(500).body("Failed to update user location");
-    //     }
+    // return ResponseEntity.ok("User location updated successfully");
+    // } else {
+    // return ResponseEntity.status(404).body("User not found");
+    // }
+    // } catch (Exception e) {
+    // // Handle exception
+    // return ResponseEntity.status(500).body("Failed to update user location");
+    // }
     // }
 
     @PutMapping("/updateLocation/{phoneNumber}")
@@ -221,7 +209,8 @@ public class UserController {
                 if (isUpdated) {
                     return ResponseEntity.ok("User details updated successfully");
                 } else {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update user details");
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Failed to update user details");
                 }
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
@@ -232,6 +221,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update user details");
         }
     }
+
     @PostMapping("/salons/{salonId}/reviews")
     public ResponseEntity<String> addReviewToSalon(
             @PathVariable Long salonId,
@@ -241,8 +231,8 @@ public class UserController {
             User user = userService.getUserByPhoneNumber(principal.getName());
             Salon salon = salonService.getSalonById(salonId);
 
-            System.out.println("User: " + user);  // Add this line
-            System.out.println("Salon: " + salon);  // Add this line
+            System.out.println("User: " + user); // Add this line
+            System.out.println("Salon: " + salon); // Add this line
 
             if (user != null && salon != null) {
                 Review review = new Review();
@@ -259,7 +249,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User or salon not found");
             }
         } catch (Exception e) {
-            e.printStackTrace();  // Add this line
+            e.printStackTrace(); // Add this line
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add review");
         }
     }
@@ -281,7 +271,6 @@ public class UserController {
         }
     }
 
-
     private ReviewDTO mapToReviewDTO(Review review) {
         ReviewDTO reviewDTO = new ReviewDTO();
         reviewDTO.setRating(review.getRating());
@@ -289,11 +278,10 @@ public class UserController {
         return reviewDTO;
     }
 
-
     @PostMapping("/salon/update-distance/{salonId}")
     public ResponseEntity<String> updateSalonDistance(@PathVariable Long salonId,
-                                                      @RequestParam Double userLatitude,
-                                                      @RequestParam Double userLongitude) {
+            @RequestParam Double userLatitude,
+            @RequestParam Double userLongitude) {
         try {
             return salonService.updateSalonDistance(salonId, userLatitude, userLongitude);
         } catch (Exception e) {
@@ -315,4 +303,3 @@ public class UserController {
     }
 
 }
-

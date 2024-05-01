@@ -3,7 +3,7 @@ HELP.md
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Ignore STS (Spring Tool Suite) files
 .apt_generated
 .classpath
 .factorypath
@@ -12,13 +12,13 @@ HELP.md
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+# Ignore IntelliJ IDEA files
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# Ignore NetBeans files
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -28,5 +28,5 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# Ignore Visual Studio Code settings
 .vscode/

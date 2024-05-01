@@ -17,22 +17,16 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
     @Transactional
     @Modifying
     @Query("DELETE FROM ServicesProvided s WHERE s.salon.id = :salonId AND s.serviceName = :serviceName")
-    void deleteServicesProvidedBySalonIdAndServiceName(@Param("salonId") Long salonId, @Param("serviceName") String serviceName);
+    void deleteServicesProvidedBySalonIdAndServiceName(@Param("salonId") Long salonId,
+            @Param("serviceName") String serviceName);
 
+    boolean existsByName(String name);
 
-	boolean existsByName(String name);
-	// List<Salon> findSalonsByServicesProvided_ServiceName(String serviceName);
-	Salon findById(long salonId);
-
+    // List<Salon> findSalonsByServicesProvided_ServiceName(String serviceName);
+    Salon findById(long salonId);
 
     Salon findSalonWithServicesAndReviewsById(Long salonId);
-
 
     List<Salon> findByServices_ServiceName(String serviceName);
 
 }
-
-
-
-
-

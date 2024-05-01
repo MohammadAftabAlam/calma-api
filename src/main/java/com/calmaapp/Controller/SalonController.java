@@ -62,7 +62,8 @@ public class SalonController {
             // Proceed with the salon registration
             salonService.registerSalon(salonOwner, salonDTO);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body("Details added successfully. Please proceed with authentication.");
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Details added successfully. Please proceed with authentication.");
         } catch (UnauthorizedAccessException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Only salon owners can register salons");
         } catch (IllegalArgumentException e) {
@@ -73,9 +74,6 @@ public class SalonController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to register salon");
         }
     }
-
-
-
 
     @PutMapping("/{salonId}")
     public ResponseEntity<String> updateSalon(
@@ -95,7 +93,7 @@ public class SalonController {
     @Transactional
     @PostMapping("/{salonId}/services")
     public ResponseEntity<String> addServicesToSalon(@PathVariable Long salonId,
-                                                     @RequestBody List<ServiceDTO> serviceDTOs) {
+            @RequestBody List<ServiceDTO> serviceDTOs) {
         return salonService.addServicesToSalon(salonId, serviceDTOs);
     }
 
@@ -114,8 +112,6 @@ public class SalonController {
                     .body("Failed to delete service from salon");
         }
     }
-
-
 
     @DeleteMapping("/{salonId}")
     public ResponseEntity<?> deleteSalon(@PathVariable Long salonId, Principal principal) {
@@ -140,7 +136,7 @@ public class SalonController {
 
     @GetMapping("/withinRadius")
     public ResponseEntity<List<Salon>> getSalonsWithin4KmRadius(@RequestParam("latitude") Double userLatitude,
-                                                                @RequestParam("longitude") Double userLongitude) {
+            @RequestParam("longitude") Double userLongitude) {
         if (userLatitude == null || userLongitude == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -181,14 +177,18 @@ public class SalonController {
             int totalImages = images.size() + 3; // Add 3 for license, electricity bill, and tax receipt images
             if (totalImages < 2 || totalImages > 5) {
                 return ResponseEntity.badRequest()
-                        .body(new UploadResponse("At least 2 salon images and one of each license, electricity bill, and tax receipt images are required.", null));
+                        .body(new UploadResponse(
+                                "At least 2 salon images and one of each license, electricity bill, and tax receipt images are required.",
+                                null));
             }
 
             // Upload images to Cloudinary and update Salon entity
-            List<String> imagePaths = imageUploadService.uploadImages(images, licenseImage, electricityBillImage, taxReceiptImage, salonId);
+            List<String> imagePaths = imageUploadService.uploadImages(images, licenseImage, electricityBillImage,
+                    taxReceiptImage, salonId);
 
             // Return the final response
-            UploadResponse response = new UploadResponse("Verification complete, salon registered successfully", imagePaths);
+            UploadResponse response = new UploadResponse("Verification complete, salon registered successfully",
+                    imagePaths);
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -219,13 +219,9 @@ public class SalonController {
             return ResponseEntity.status(HttpStatus.CREATED).body(expertEmployeeDTO);
         } catch (IOException e) {
             // Handle any IO exception occurred during file uploading
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload expert details: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload expert details: " + e.getMessage());
         }
     }
 
-
-
 }
-
-
-

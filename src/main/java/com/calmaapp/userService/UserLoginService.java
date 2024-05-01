@@ -27,7 +27,6 @@ public class UserLoginService {
     @Autowired
     private JwtHelper jwtHelper;
 
-
     public ResponseEntity<Map<String, String>> loginUser(UserDTO userDTO) {
         String phoneNumber = userDTO.getPhoneNumber();
         User user = userRepository.findByPhoneNumber(phoneNumber);
@@ -54,8 +53,3 @@ public class UserLoginService {
         }
     }
 }
-
-
-    
-            
-

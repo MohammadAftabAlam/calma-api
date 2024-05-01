@@ -136,4 +136,9 @@ public class User implements UserDetails {
         return roles;
     }
 
+    public boolean isPresent() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'isPresent'");
+    }
+
 }

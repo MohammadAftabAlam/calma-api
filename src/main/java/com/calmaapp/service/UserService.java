@@ -27,28 +27,27 @@ public class UserService {
 
     public void updateUserLocation(String phoneNumber, double latitude, double longitude) {
         User user = userRepository.findByPhoneNumber(phoneNumber);
-        if(user !=null) {
+        if (user != null) {
             user.setLatitude(latitude);
             user.setLongitude(longitude);
             userRepository.save(user);
-        }
-        else {
+        } else {
             throw new RuntimeException("User not found with phone number: " + phoneNumber);
         }
     }
 
-
-    // public void updateUserLocation(String phoneNumber, double latitude, double longitude) {
-    //     User user = userRepository.findByPhoneNumber(phoneNumber);
-    //     if (user != null) {
-    //         user.setLatitude(latitude);
-    //         user.setLongitude(longitude);
-    //         userRepository.save(user);
-    //     } else {
-    //         throw new ResourceNotFoundException("User not found with phone number: " + phoneNumber);
-    //     }
+    // public void updateUserLocation(String phoneNumber, double latitude, double
+    // longitude) {
+    // User user = userRepository.findByPhoneNumber(phoneNumber);
+    // if (user != null) {
+    // user.setLatitude(latitude);
+    // user.setLongitude(longitude);
+    // userRepository.save(user);
+    // } else {
+    // throw new ResourceNotFoundException("User not found with phone number: " +
+    // phoneNumber);
     // }
-
+    // }
 
     public boolean updateUserDetails(Long userId, UserDTO updatedUserDTO) {
         Optional<User> optionalUser = userRepository.findById(userId);
@@ -135,10 +134,4 @@ public class UserService {
         return userRepository.findByResetToken(resetToken);
     }
 
-
 }
-
-
-
-
-

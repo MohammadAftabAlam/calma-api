@@ -20,7 +20,7 @@ public class EmailService {
     @Autowired
     private UserRepository userRepository;
 
-    public void sendOTP(String recipientEmail,String otp) {
+    public void sendOTP(String recipientEmail, String otp) {
         // String otp = generateOTP(6); // Generate a 6-digit OTP
 
         // // Send the OTP via email
@@ -41,8 +41,6 @@ public class EmailService {
         emailSender.send(message);
     }
 
-   
-
     private void saveOTPToDatabase(String email, String otp) {
         User user = userRepository.findByEmail(email);
         if (user != null) {
@@ -54,6 +52,5 @@ public class EmailService {
             System.err.println("User with email " + email + " not found.");
         }
     }
-    
-    
+
 }

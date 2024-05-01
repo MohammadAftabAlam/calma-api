@@ -10,6 +10,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +27,7 @@ import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.ServicesProvided;
 import com.calmaapp.entity.User;
 import com.calmaapp.exception.UnauthorizedAccessException;
+//import com.calmaapp.mappingdistnace.DistanceMatrixService;
 import com.calmaapp.payloads.SalonDTO;
 import com.calmaapp.payloads.ServiceDTO;
 import com.calmaapp.repository.SalonRepository;
@@ -76,7 +82,8 @@ public class SalonService {
             throw new RuntimeException("Salon with this name already exists");
         }
 
-        // Convert the salon address to coordinates (latitude and longitude) using the geocoding service
+        // Convert the salon address to coordinates (latitude and longitude) using the
+        // geocoding service
         Coordinates coordinates = geocodingService.getCoordinatesFromAddress(salonDTO.getAddress());
 
         // Create a new `Salon` object
@@ -96,7 +103,6 @@ public class SalonService {
         // Save the salon to the database
         salonRepository.save(salon);
     }
-
 
     @Transactional
     public void deleteServiceByNameFromSalon(Long salonId, String serviceName) {
@@ -208,7 +214,7 @@ public class SalonService {
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double distance = R * c; // Convert to kilometers
 
@@ -270,6 +276,7 @@ public class SalonService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Salon not found");
         }
     }
+
     public ResponseEntity<?> getSalonByIdWithServicesAndReviews(Long salonId) {
         try {
             Salon salon = salonRepository.findSalonWithServicesAndReviewsById(salonId);

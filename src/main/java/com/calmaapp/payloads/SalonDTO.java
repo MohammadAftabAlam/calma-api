@@ -1,7 +1,5 @@
 package com.calmaapp.payloads;
 
-
-
 import com.calmaapp.entity.Salon;
 import com.calmaapp.entity.User;
 import lombok.Getter;
@@ -13,22 +11,24 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.web.multipart.MultipartFile;
+
 @Getter
 @Setter
 @NoArgsConstructor
 public class SalonDTO {
     public SalonDTO(Salon salon) {
-        this.address=salon.getAddress();
-        this.contactInfo=salon.getContactInfo();
-        this.name=salon.getName();
-        this.rating=salon.getRating();
+        this.address = salon.getAddress();
+        this.contactInfo = salon.getContactInfo();
+        this.name = salon.getName();
+        this.rating = salon.getRating();
         this.owner = salon.getOwner();
         this.latitude = salon.getLatitude();
         this.longitude = salon.getLongitude();
         this.salonImages = new ArrayList<>();
 
-
     }
+
     private Long id;
     private String name;
     private String address;
@@ -88,7 +88,3 @@ public class SalonDTO {
         this.closingTime = closingTime != null ? closingTime.toString() : null;
     }
 }
-
-
-
-
